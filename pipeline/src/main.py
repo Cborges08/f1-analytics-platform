@@ -1,66 +1,54 @@
+import time
 from ingestion.openf1_client import (
     get_sessions,
-    get_driver_sessions,
-    get_driver_positions
+    get_drivers,
+    get_race_results
 )
+from database.connection import init_db
+from database.repository import save_sessions, save_drivers, save_race_results
 
-# Driver numbers — 2024 grid
-DRIVERS = {
-    "Verstappen": 1,
-    "Leclerc": 16,
-    "Hamilton": 44,
-    "Norris": 4,
-    "Sainz": 55,
-}
-
-TARGET_DRIVER = "Verstappen"
 TARGET_YEAR = 2025
 
 
 def main():
     print("🏎️  F1 Analytics Pipeline starting...")
-    print(f"   Target: {TARGET_DRIVER} — {TARGET_YEAR} season\n")
+    print(f"   Season: {TARGET_YEAR}\n")
 
-    # 1. All sessions of the year
+    # 1. Init database
+    print("🗄️  Initializing database...")
+    init_db()
+
+    # 2. Fetch and save all sessions
     print("📅 Fetching sessions...")
     sessions = get_sessions(year=TARGET_YEAR)
     race_sessions = sessions[sessions["session_name"] == "Race"]
-    print(f"   ✅ {len(race_sessions)} race sessions found\n")
+    saved = save_sessions(sessions, year=TARGET_YEAR)
+    print(f"   ✅ {saved} sessions saved ({len(race_sessions)} races)\n")
 
- # 2. Use last race session to get driver info
-    last_race = race_sessions.iloc[-1]
-    last_session_key = int(last_race["session_key"])
-    circuit = last_race["circuit_short_name"]
+    # 3. For each race — fetch drivers and results
+    print("🏁 Processing race results...")
+    for _, race in race_sessions.iterrows():
+        session_key = int(race["session_key"])
+        circuit = race["circuit_short_name"]
 
-    print(f"👤 Fetching {TARGET_DRIVER}'s data from last race: {circuit}...")
-    driver_number = DRIVERS[TARGET_DRIVER]
-    driver_data = get_driver_sessions(
-        driver_number=driver_number,
-        session_key=last_session_key
-    )
+        try:
+            # All drivers in session
+            all_drivers = get_drivers(session_key=session_key)
+            save_drivers(all_drivers, session_key=session_key, year=TARGET_YEAR)
 
-    if driver_data.empty:
-        print(f"   ⚠️  No data found for driver #{driver_number}")
-        return
+            # Race results (final positions)
+            results = get_race_results(session_key=session_key)
+            rows = save_race_results(results, session_key=session_key, year=TARGET_YEAR)
 
-    print(f"   ✅ Driver found")
-    print(f"   Team: {driver_data['team_name'].iloc[0]}")
-    print(f"   Full name: {driver_data['full_name'].iloc[0]}\n")
+            print(f"   ✅ {circuit} — {rows} driver results saved")
 
-    # 3. Position data from last race
-    print(f"🏁 Fetching positions from: {circuit}...")
-    positions = get_driver_positions(
-        driver_number=driver_number,
-        session_key=last_session_key
-    )
+        except Exception as e:
+            print(f"   ⚠️  {circuit} — skipped: {e}")
 
-    if not positions.empty:
-        first_pos = positions.iloc[0]["position"]
-        last_pos = positions.iloc[-1]["position"]
-        print(f"   Started at position: {first_pos}")
-        print(f"   Finished at position: {last_pos}")
+        # Respect API rate limit
+        time.sleep(1.5)
 
-    print("\n✅ Pipeline smoke test complete.")
+    print("\n✅ Pipeline complete. Data persisted to PostgreSQL.")
 
 
 if __name__ == "__main__":
