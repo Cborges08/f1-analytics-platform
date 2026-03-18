@@ -1,0 +1,19 @@
+# HTTP & APIs
+requests==2.32.3
+
+# Data processing
+pandas==2.2.3
+numpy==1.26.4
+
+# Orchestration
+prefect==2.20.3
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.36
+
+# Environment
+python-dotenv==1.0.1
+
+# Data validation
+pydantic==2.10.3
