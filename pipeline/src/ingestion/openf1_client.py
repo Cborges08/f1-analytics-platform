@@ -59,3 +59,22 @@ def get_driver_positions(driver_number: int, session_key: int) -> pd.DataFrame:
     )
     response.raise_for_status()
     return pd.DataFrame(response.json())
+
+def get_pit_stops(session_key: int) -> pd.DataFrame:
+    """Fetch all pit stop data for a session."""
+    response = requests.get(
+        f"{OPENF1_BASE_URL}/pit",
+        params={"session_key": session_key}
+    )
+    response.raise_for_status()
+    return pd.DataFrame(response.json())
+
+
+def get_race_control(session_key: int) -> pd.DataFrame:
+    """Fetch race control messages (flags, safety cars) for a session."""
+    response = requests.get(
+        f"{OPENF1_BASE_URL}/race_control",
+        params={"session_key": session_key}
+    )
+    response.raise_for_status()
+    return pd.DataFrame(response.json())

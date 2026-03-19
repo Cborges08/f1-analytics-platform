@@ -39,8 +39,35 @@ CREATE TABLE IF NOT EXISTS race_results (
     UNIQUE(session_key, driver_number)
 );
 
+CREATE TABLE IF NOT EXISTS pit_stops (
+    id                SERIAL PRIMARY KEY,
+    session_key       INTEGER REFERENCES sessions(session_key),
+    driver_number     INTEGER,
+    pit_duration      NUMERIC(8,3),   -- seconds
+    lap_number        INTEGER,
+    year              INTEGER,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(session_key, driver_number, lap_number)
+);
+
+CREATE TABLE IF NOT EXISTS race_control_events (
+    id                SERIAL PRIMARY KEY,
+    session_key       INTEGER REFERENCES sessions(session_key),
+    date              TIMESTAMPTZ,
+    lap_number        INTEGER,
+    category          VARCHAR(50),    -- Flag, SafetyCar, etc
+    flag              VARCHAR(20),    -- YELLOW, RED, GREEN, etc
+    message           TEXT,
+    year              INTEGER,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_sessions_year ON sessions(year);
 CREATE INDEX IF NOT EXISTS idx_drivers_session ON drivers(session_key);
 CREATE INDEX IF NOT EXISTS idx_race_results_driver ON race_results(driver_number);
 CREATE INDEX IF NOT EXISTS idx_race_results_year ON race_results(year);
+CREATE INDEX IF NOT EXISTS idx_pit_stops_session ON pit_stops(session_key);
+CREATE INDEX IF NOT EXISTS idx_pit_stops_driver ON pit_stops(driver_number);
+CREATE INDEX IF NOT EXISTS idx_race_control_session ON race_control_events(session_key);
+CREATE INDEX IF NOT EXISTS idx_race_control_flag ON race_control_events(flag);

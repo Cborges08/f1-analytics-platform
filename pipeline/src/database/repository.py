@@ -102,3 +102,54 @@ def save_race_results(df: pd.DataFrame, session_key: int, year: int) -> int:
         conn.commit()
 
     return len(data)
+
+def save_pit_stops(df: pd.DataFrame, session_key: int, year: int) -> int:
+    """Save pit stop data. Returns rows inserted."""
+    if df.empty:
+        return 0
+
+    cols = ["driver_number", "pit_duration", "lap_number"]
+    existing_cols = [c for c in cols if c in df.columns]
+    data = df[existing_cols].copy()
+    data["session_key"] = session_key
+    data["year"] = year
+
+    engine = get_engine()
+    with engine.connect() as conn:
+        for _, row in data.iterrows():
+            conn.execute(text("""
+                INSERT INTO pit_stops (
+                    session_key, driver_number, pit_duration, lap_number, year
+                ) VALUES (
+                    :session_key, :driver_number, :pit_duration, :lap_number, :year
+                )
+                ON CONFLICT (session_key, driver_number, lap_number) DO NOTHING
+            """), row.to_dict())
+        conn.commit()
+
+    return len(data)
+
+def save_race_control(df: pd.DataFrame, session_key: int, year: int) -> int:
+    """Save race control events. Returns rows inserted."""
+    if df.empty:
+        return 0
+
+    cols = ["date", "lap_number", "category", "flag", "message"]
+    existing_cols = [c for c in cols if c in df.columns]
+    data = df[existing_cols].copy()
+    data["session_key"] = session_key
+    data["year"] = year
+
+    engine = get_engine()
+    with engine.connect() as conn:
+        for _, row in data.iterrows():
+            conn.execute(text("""
+                INSERT INTO race_control_events (
+                    session_key, date, lap_number, category, flag, message, year
+                ) VALUES (
+                    :session_key, :date, :lap_number, :category, :flag, :message, :year
+                )
+            """), row.to_dict())
+        conn.commit()
+
+    return len(data)
