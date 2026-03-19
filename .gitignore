@@ -36,3 +36,7 @@ Thumbs.db
 *.csv
 *.parquet
 *.json.gz
+
+# ML models (large binary files — use MLflow or S3 in prod)
+pipeline/models/*.pkl
+pipeline/models/*.png
