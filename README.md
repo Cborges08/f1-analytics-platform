@@ -62,9 +62,9 @@ docker-compose up --build
 ## Roadmap
 
 - [x] Project setup & architecture
-- [ ] Data ingestion pipeline (OpenF1 + Ergast)
-- [ ] Data warehouse schema (PostgreSQL)
-- [ ] dbt transformations
+- [x] Data ingestion pipeline (OpenF1 + Ergast)
+- [x] Data warehouse schema (PostgreSQL)
+- [x] dbt transformations
 - [ ] ML prediction model
 - [ ] REST API
 - [ ] Interactive dashboard
