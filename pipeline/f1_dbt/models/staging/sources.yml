@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: public
+    database: f1_analytics
+    schema: public
+    tables:
+      - name: sessions
+      - name: race_results
+      - name: drivers
+      - name: pit_stops
+      - name: race_control_events
