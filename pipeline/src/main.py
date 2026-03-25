@@ -3,6 +3,7 @@ from ingestion.openf1_client import (
     get_sessions,
     get_drivers,
     get_race_results,
+    get_qualifying_results,
     get_pit_stops,
     get_race_control
 )
@@ -11,6 +12,7 @@ from database.repository import (
     save_sessions,
     save_drivers,
     save_race_results,
+    save_qualifying_results,
     save_pit_stops,
     save_race_control
 )
@@ -52,7 +54,10 @@ def main():
     saved = save_sessions(sessions, year=TARGET_YEAR)
     print(f"   ✅ {saved} sessions saved ({len(race_sessions)} races)\n")
 
-    # 3. For each race — fetch all data
+    # 3. Find qualifying sessions for each race
+    quali_sessions = sessions[sessions["session_name"] == "Qualifying"]
+
+    # 4. For each race — fetch all data
     print("🏁 Processing race data...")
     for _, race in race_sessions.iterrows():
         session_key = int(race["session_key"])
@@ -71,7 +76,17 @@ def main():
             control = fetch_with_retry(get_race_control, session_key=session_key)
             flag_rows = save_race_control(control, session_key=session_key, year=TARGET_YEAR)
 
-            print(f"   ✅ {circuit} — pits: {pit_rows}, flags: {flag_rows}")
+            # Fetch qualifying for this circuit
+            circuit_quali = quali_sessions[
+                quali_sessions["circuit_short_name"] == circuit
+            ]
+            quali_rows = 0
+            if not circuit_quali.empty:
+                quali_key = int(circuit_quali.iloc[0]["session_key"])
+                quali_data = fetch_with_retry(get_qualifying_results, session_key=quali_key)
+                quali_rows = save_qualifying_results(quali_data, session_key=session_key, year=TARGET_YEAR)
+
+            print(f"   ✅ {circuit} — pits: {pit_rows}, flags: {flag_rows}, quali: {quali_rows}")
 
         except Exception as e:
             print(f"   ❌ {circuit} — failed after retries: {e}")

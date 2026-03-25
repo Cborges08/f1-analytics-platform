@@ -62,6 +62,19 @@ CREATE TABLE IF NOT EXISTS race_control_events (
     created_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS qualifying_results (
+    id                SERIAL PRIMARY KEY,
+    session_key       INTEGER REFERENCES sessions(session_key),
+    driver_number     INTEGER,
+    position          INTEGER,
+    q1_time           VARCHAR(20),
+    q2_time           VARCHAR(20),
+    q3_time           VARCHAR(20),
+    year              INTEGER,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(session_key, driver_number)
+);
+
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_sessions_year ON sessions(year);
 CREATE INDEX IF NOT EXISTS idx_drivers_session ON drivers(session_key);
@@ -71,3 +84,6 @@ CREATE INDEX IF NOT EXISTS idx_pit_stops_session ON pit_stops(session_key);
 CREATE INDEX IF NOT EXISTS idx_pit_stops_driver ON pit_stops(driver_number);
 CREATE INDEX IF NOT EXISTS idx_race_control_session ON race_control_events(session_key);
 CREATE INDEX IF NOT EXISTS idx_race_control_flag ON race_control_events(flag);
+CREATE INDEX IF NOT EXISTS idx_qualifying_session ON qualifying_results(session_key);
+CREATE INDEX IF NOT EXISTS idx_qualifying_driver ON qualifying_results(driver_number);
+CREATE INDEX IF NOT EXISTS idx_qualifying_year ON qualifying_results(year);

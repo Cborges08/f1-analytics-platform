@@ -10,3 +10,4 @@ sources:
       - name: drivers
       - name: pit_stops
       - name: race_control_events
+      - name: qualifying_results

@@ -60,6 +60,21 @@ def get_driver_positions(driver_number: int, session_key: int) -> pd.DataFrame:
     response.raise_for_status()
     return pd.DataFrame(response.json())
 
+def get_qualifying_results(session_key: int) -> pd.DataFrame:
+    """Fetch qualifying results (final positions) for a qualifying session."""
+    response = requests.get(
+        f"{OPENF1_BASE_URL}/position",
+        params={"session_key": session_key}
+    )
+    response.raise_for_status()
+    df = pd.DataFrame(response.json())
+    if df.empty:
+        return df
+    # Get final position per driver (last entry)
+    final = df.sort_values("date").groupby("driver_number").last().reset_index()
+    return final[["driver_number", "position"]].rename(columns={"position": "qualifying_position"})
+
+
 def get_pit_stops(session_key: int) -> pd.DataFrame:
     """Fetch all pit stop data for a session."""
     response = requests.get(

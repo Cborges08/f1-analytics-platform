@@ -29,7 +29,8 @@ def load_features() -> pd.DataFrame:
             red_flags,
             safety_car_events,
             vsc_events,
-            total_incidents
+            total_incidents,
+            qualifying_position
         FROM analytics.mart_race_features
         WHERE finish_position IS NOT NULL
         ORDER BY race_date, finish_position
@@ -81,6 +82,9 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # Pit stop efficiency
     df["pit_efficiency"] = df["total_pit_time"] / df["total_pit_stops"].replace(0, 1)
 
+    # Fill missing qualifying positions with median
+    df["qualifying_position"] = df["qualifying_position"].fillna(df["qualifying_position"].median())
+
     return df
 
 
@@ -104,4 +108,5 @@ def get_feature_columns() -> list:
         "team_avg_position",
         "avg_position_last3",
         "avg_position_last5",
+        "qualifying_position",
     ]

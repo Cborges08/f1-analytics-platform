@@ -129,6 +129,36 @@ def save_pit_stops(df: pd.DataFrame, session_key: int, year: int) -> int:
 
     return len(data)
 
+def save_qualifying_results(df: pd.DataFrame, session_key: int, year: int) -> int:
+    """Save qualifying results to database. Returns rows inserted."""
+    if df.empty:
+        return 0
+
+    data = df.copy()
+    data["session_key"] = session_key
+    data["year"] = year
+
+    # Rename qualifying_position back to position for DB storage
+    if "qualifying_position" in data.columns:
+        data = data.rename(columns={"qualifying_position": "position"})
+
+    engine = get_engine()
+    with engine.connect() as conn:
+        for _, row in data.iterrows():
+            row_dict = row.to_dict()
+            conn.execute(text("""
+                INSERT INTO qualifying_results (
+                    session_key, driver_number, position, year
+                ) VALUES (
+                    :session_key, :driver_number, :position, :year
+                )
+                ON CONFLICT (session_key, driver_number) DO NOTHING
+            """), row_dict)
+        conn.commit()
+
+    return len(data)
+
+
 def save_race_control(df: pd.DataFrame, session_key: int, year: int) -> int:
     """Save race control events. Returns rows inserted."""
     if df.empty:

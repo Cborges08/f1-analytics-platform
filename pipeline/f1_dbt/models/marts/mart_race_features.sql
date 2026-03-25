@@ -18,6 +18,10 @@ flags as (
     select * from {{ ref('int_race_flags_summary') }}
 ),
 
+qualifying as (
+    select * from {{ ref('stg_qualifying') }}
+),
+
 final as (
     select
         -- Identifiers
@@ -38,6 +42,9 @@ final as (
         -- Race result (target variable for ML)
         r.position           as finish_position,
         r.result_category,
+
+        -- Qualifying features
+        q.qualifying_position,
 
         -- Pit stop features
         coalesce(p.total_pit_stops, 0)      as total_pit_stops,
@@ -61,6 +68,8 @@ final as (
     left join pits p on p.session_key = r.session_key
                     and p.driver_number = r.driver_number
     left join flags f on f.session_key = r.session_key
+    left join qualifying q on q.session_key = r.session_key
+                           and q.driver_number = r.driver_number
 )
 
 select * from final
